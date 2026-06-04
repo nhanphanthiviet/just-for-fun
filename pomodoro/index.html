@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personal Pomodoro 🍅</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-mode="work" data-theme="dark">
+
+  <!-- assistant mascot (defined once, reused via <use>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ic-bot" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+            stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 31a17 15 0 0 1 34 0"/>                                  <!-- headphone band -->
+      <rect x="9" y="29" width="8" height="14" rx="4" fill="currentColor" stroke="none"/>
+      <rect x="47" y="29" width="8" height="14" rx="4" fill="currentColor" stroke="none"/>
+      <rect x="15" y="22" width="34" height="27" rx="11"/>                 <!-- head -->
+      <path d="M23 33.5q3-3.5 6 0"/>                                       <!-- happy eyes -->
+      <path d="M35 33.5q3-3.5 6 0"/>
+      <path d="M26 41q6 4.5 12 0"/>                                        <!-- smile -->
+    </symbol>
+  </svg>
+
+  <div class="app">
+
+    <!-- ===== HEADER ===== -->
+    <header class="topbar">
+      <h1 data-i18n="app_title">🍅 Pomodoro</h1>
+      <div class="topbar-actions">
+        <button id="btn-lang" class="icon-btn" data-i18n-title="set_lang" title="Language" aria-label="Language">EN</button>
+        <button id="btn-theme" class="icon-btn" data-i18n-title="set_bg" title="Background" aria-label="Background">🌙</button>
+        <button id="btn-settings" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- ===== MODE SELECTOR ===== -->
+    <nav class="tabs" role="tablist">
+      <button class="tab" data-type="work" data-i18n="tab_work">Focus</button>
+      <button class="tab" data-type="short" data-i18n="tab_short">Short break</button>
+      <button class="tab" data-type="long" data-i18n="tab_long">Long break</button>
+    </nav>
+
+    <!-- ===== LAYOUT: left = clock, right = checklist ===== -->
+    <div class="layout">
+
+      <!-- ----- CLOCK ----- -->
+      <main class="clock-card">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 300 300" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" class="g1"></stop>
+                <stop offset="100%" class="g2"></stop>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="150" cy="150" r="130"></circle>
+            <circle class="ring-fg" cx="150" cy="150" r="130"></circle>
+          </svg>
+          <div class="ring-center">
+            <div id="time" class="time">25:00</div>
+            <div id="phase-label" class="phase-label">Focus</div>
+            <div id="plan-badge" class="plan-badge hidden"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="btn-start" class="btn primary">Start</button>
+          <div class="sub-controls">
+            <button id="btn-reset" class="btn ghost"><span class="ico">↺</span> <span data-i18n="reset">Reset</span></button>
+            <button id="btn-skip" class="btn ghost"><span class="ico">⏭</span> <span data-i18n="skip">Skip</span></button>
+          </div>
+        </div>
+
+        <p class="counter"><span data-i18n="counter_pre">Completed</span> <span id="count">0</span> <span data-i18n="counter_post">pomodoros</span></p>
+        <button id="btn-exit-plan" class="btn link hidden" data-i18n="exit_plan">✕ Exit plan</button>
+        <p class="hint"><span data-i18n="hint_pre">Tip: press</span> <kbd>Space</kbd> <span data-i18n="hint_post">to start / pause</span></p>
+      </main>
+
+      <!-- ----- RIGHT COLUMN: CHECKLIST ----- -->
+      <div class="side">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 data-i18n="tasks_title">Tasks</h2>
+            <button id="btn-clear-tasks" class="btn link small-link hidden" data-i18n="clear_all">Clear all</button>
+          </div>
+          <form id="task-form" class="row">
+            <input id="task-input" type="text" data-i18n-ph="task_ph" placeholder="What will you focus on?" autocomplete="off">
+            <input id="task-min" type="number" class="min-input" min="1" max="999" value="25" data-i18n-title="min_title" title="Minutes" aria-label="Minutes">
+            <select id="task-unit" class="unit-select" data-i18n-title="unit_title" title="Unit" aria-label="Unit">
+              <option value="m" data-i18n="unit_min">min</option>
+              <option value="h" data-i18n="unit_hour">hr</option>
+              <option value="s" data-i18n="unit_sec">sec</option>
+            </select>
+            <button class="btn small" data-i18n="add">Add</button>
+          </form>
+          <p id="task-msg" class="task-msg hidden" role="alert"></p>
+          <ul id="task-list" class="task-list"></ul>
+          <div id="task-empty" class="empty-state">
+            <div class="empty-icon">🗒️</div>
+            <p data-i18n="empty_hint">No tasks yet. Add one above, or use the assistant to generate a plan.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHATBOT — FLOATING BUTTON + POPUP ===== -->
+  <button id="chat-fab" class="fab" data-i18n-title="chat_title" title="Plan assistant" aria-label="Plan assistant">
+    <svg class="bot-icon" aria-hidden="true"><use href="#ic-bot"/></svg>
+  </button>
+  <div id="chat-popup" class="chat-popup hidden">
+    <div class="chat-popup-head">
+      <div class="chat-title-wrap">
+        <span class="bot-avatar">
+          <svg class="bot-icon" aria-hidden="true"><use href="#ic-bot"/></svg>
+        </span>
+        <h2 data-i18n="chat_title">Plan assistant</h2>
+      </div>
+      <button id="chat-close" class="chat-close" data-i18n-title="close" title="Close" aria-label="Close">✕</button>
+    </div>
+    <div id="chat-log" class="chat-log"></div>
+    <div id="chips" class="chips"></div>
+    <form id="chat-form" class="row">
+      <input id="chat-input" type="text" data-i18n-ph="chat_ph" placeholder="e.g. work 50 min break 10 min 4 sessions" autocomplete="off">
+      <button class="btn small" data-i18n="send">Send</button>
+    </form>
+  </div>
+
+  <!-- ===== SETTINGS DIALOG ===== -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2 data-i18n="settings_title">Settings</h2>
+      <label><span data-i18n="set_work">Focus</span>
+        <span class="dur-field">
+          <input id="set-work" type="number" min="1" max="999">
+          <select id="set-work-unit" class="unit-select">
+            <option value="m" data-i18n="unit_min">min</option>
+            <option value="h" data-i18n="unit_hour">hr</option>
+            <option value="s" data-i18n="unit_sec">sec</option>
+          </select>
+        </span>
+      </label>
+      <label><span data-i18n="set_short">Short break</span>
+        <span class="dur-field">
+          <input id="set-short" type="number" min="1" max="999">
+          <select id="set-short-unit" class="unit-select">
+            <option value="m" data-i18n="unit_min">min</option>
+            <option value="h" data-i18n="unit_hour">hr</option>
+            <option value="s" data-i18n="unit_sec">sec</option>
+          </select>
+        </span>
+      </label>
+      <label><span data-i18n="set_long">Long break</span>
+        <span class="dur-field">
+          <input id="set-long" type="number" min="1" max="999">
+          <select id="set-long-unit" class="unit-select">
+            <option value="m" data-i18n="unit_min">min</option>
+            <option value="h" data-i18n="unit_hour">hr</option>
+            <option value="s" data-i18n="unit_sec">sec</option>
+          </select>
+        </span>
+      </label>
+      <label><span data-i18n="set_interval">Long break after every (pomodoros)</span> <input id="set-interval" type="number" min="1" max="12"></label>
+      <label class="check"><input id="set-auto" type="checkbox"> <span data-i18n="set_auto">Auto-start next session</span></label>
+      <label class="check"><input id="set-sound" type="checkbox"> <span data-i18n="set_sound">Sound when time is up</span></label>
+      <label class="check"><input id="set-notify" type="checkbox"> <span data-i18n="set_notify">Desktop notifications</span></label>
+      <hr class="set-divider">
+      <label><span data-i18n="set_lang">Language</span>
+        <select id="set-lang">
+          <option value="vi">Tiếng Việt</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <label><span data-i18n="set_bg">Background</span>
+        <select id="set-bg">
+          <option value="dark" data-i18n="bg_dark">Dark</option>
+          <option value="light" data-i18n="bg_light">Light</option>
+          <option value="custom" data-i18n="bg_custom">Custom</option>
+        </select>
+      </label>
+      <label id="bg-color-row"><span data-i18n="set_bg_custom">Custom color</span> <input id="set-bg-color" type="color" value="#1b2a4a"></label>
+      <div class="row end">
+        <button id="set-cancel" class="btn ghost" data-i18n="cancel">Cancel</button>
+        <button id="set-save" class="btn primary compact" data-i18n="save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- load order by dependency -->
+  <script src="js/i18n.js"></script>
+  <script src="js/core/settings.js"></script>
+  <script src="js/core/timer.js"></script>
+  <script src="js/core/scheduler.js"></script>
+  <script src="js/core/parser.js"></script>
+  <script src="js/core/tasks.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

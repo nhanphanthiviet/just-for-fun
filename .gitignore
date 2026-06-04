@@ -1,0 +1,9 @@
+# IDE (JetBrains / IntelliJ / PyCharm)
+.idea/
+
+# Python cache
+__pycache__/
+heart/__pycache__/
+*.py[cod]
+*.pyo
+.vscode/
