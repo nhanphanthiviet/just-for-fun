@@ -70,6 +70,8 @@ class App {
     this.parser = new PlanParser();
     this.tasks = new TaskStore();
     this.sound = new Sound();
+    this.ambient = new Ambient();
+    this.ambient.setVolume(this.settings.ambientVol);
     this.activeTaskId = null;
     this._animateIds = new Set();   // task ids to play an "added" animation for
     this._flashId = null;           // task id to flash (duplicate warning)
@@ -87,8 +89,10 @@ class App {
     this._renderChips();
     this.$taskMin.value = this.settings.work;
     this.$taskUnit.value = this.settings.workUnit;
+    this.$ambVol.value = Math.round(this.settings.ambientVol * 100);
     this._applyCurrent(false);
     this._renderTasks();
+    this._renderTracks();
     this._updateLangBtn();
     this._updateThemeBtn();
     this._botSay(this.i18n.t("greeting"));
@@ -114,6 +118,8 @@ class App {
     this.$modal = document.getElementById("settings-modal");
     this.$lang = document.getElementById("btn-lang");
     this.$theme = document.getElementById("btn-theme");
+    this.$ambTracks = document.getElementById("amb-tracks");
+    this.$ambVol = document.getElementById("amb-vol");
   }
 
   _bind() {
@@ -163,6 +169,32 @@ class App {
       }
     });
 
+    // drag & drop to reorder tasks (delegated to the list, set up once)
+    this.$taskList.addEventListener("dragstart", (e) => {
+      const li = e.target.closest(".task-item");
+      if (!li) return;
+      li.classList.add("dragging");
+      this._dropped = false;
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", li.dataset.id); } catch (_) { /* Firefox needs setData */ }
+    });
+    this.$taskList.addEventListener("dragover", (e) => {
+      const dragging = this.$taskList.querySelector(".dragging");
+      if (!dragging) return;
+      e.preventDefault();
+      const after = this._dragAfterElement(e.clientY);
+      if (after == null) this.$taskList.appendChild(dragging);
+      else this.$taskList.insertBefore(dragging, after);
+    });
+    this.$taskList.addEventListener("drop", (e) => { e.preventDefault(); this._dropped = true; });
+    this.$taskList.addEventListener("dragend", (e) => {
+      const li = e.target.closest(".task-item");
+      if (li) li.classList.remove("dragging");
+      // dropped on the list -> save the new order; cancelled (Esc/outside) -> restore
+      if (this._dropped) this._commitTaskOrder();
+      else this._renderTasks();
+    });
+
     // chatbot popup
     this.$chatPopup = document.getElementById("chat-popup");
     document.getElementById("chat-fab").addEventListener("click", () => this.$chatPopup.classList.toggle("hidden"));
@@ -183,6 +215,18 @@ class App {
     document.getElementById("set-save").addEventListener("click", () => this._saveSettings());
     document.getElementById("set-bg").addEventListener("change", (e) => {
       document.getElementById("bg-color-row").classList.toggle("hidden", e.target.value !== "custom");
+    });
+
+    // ambient playlist: click a track to play it (loops), click it again to stop
+    this.$ambTracks.addEventListener("click", (e) => {
+      const btn = e.target.closest(".track");
+      if (btn) this._onTrack(btn.dataset.amb);
+    });
+    this.$ambVol.addEventListener("input", () => {
+      const v = (parseInt(this.$ambVol.value, 10) || 0) / 100;
+      this.ambient.setVolume(v);
+      this.settings.ambientVol = v;
+      this.settings.save();
     });
 
     document.addEventListener("keydown", (e) => {
@@ -286,6 +330,22 @@ class App {
     this._renderButtons();
   }
 
+  // ====================================================================
+  //  Ambient playlist — a manual looping player, independent of the timer.
+  //  Click a track to play it; click the active one (or "Off") to stop.
+  // ====================================================================
+  _onTrack(type) {
+    if (type === "off" || this.ambient.type === type) this.ambient.stop();
+    else this.ambient.play(type);
+    this._renderTracks();
+  }
+
+  _renderTracks() {
+    this.$ambTracks.querySelectorAll(".track").forEach((b) => {
+      b.classList.toggle("active", b.dataset.amb === this.ambient.type);
+    });
+  }
+
   // shorten a task name so it fits in the ring: keep the first words, cut on
   // a word boundary, add "…" if trimmed (full text shown via the title tooltip)
   _shortLabel(text, max = 20) {
@@ -380,8 +440,13 @@ class App {
       li.className = "task-item" +
         (it.done ? " done" : "") +
         (it.id === this.activeTaskId ? " active" : "");
+      li.draggable = true;
+      li.dataset.id = String(it.id);
       if (this._animateIds.has(it.id)) li.classList.add("just-added");
       if (it.id === this._flashId) li.classList.add("flash");
+
+      const grip = document.createElement("span");
+      grip.className = "t-grip"; grip.textContent = "⠿"; grip.title = this.i18n.t("drag_title");
 
       const run = document.createElement("button");
       run.className = "t-run"; run.textContent = "▶"; run.title = this.i18n.t("run_title");
@@ -403,12 +468,31 @@ class App {
         this._renderTasks();
       });
 
-      li.append(run, span, min, del);
+      li.append(grip, run, span, min, del);
       this.$taskList.appendChild(li);
       if (it.id === this._flashId) li.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
     this._animateIds.clear();
     this._flashId = null;
+  }
+
+  // which task row should the dragged item be inserted *before* (null = end)
+  _dragAfterElement(y) {
+    const rows = [...this.$taskList.querySelectorAll(".task-item:not(.dragging)")];
+    let closest = { offset: -Infinity, el: null };
+    for (const row of rows) {
+      const box = row.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;   // above the row's middle?
+      if (offset < 0 && offset > closest.offset) closest = { offset, el: row };
+    }
+    return closest.el;
+  }
+
+  // persist the new order shown in the DOM, then re-render cleanly
+  _commitTaskOrder() {
+    const ids = [...this.$taskList.querySelectorAll(".task-item")].map((li) => li.dataset.id);
+    this.tasks.reorder(ids);
+    this._renderTasks();
   }
 
   // brief inline notice under the task form (e.g. duplicate warning)

@@ -13,6 +13,7 @@ class Settings {
     this.autoStart = true;        // auto-start the next session
     this.soundOn = true;          // sound alert when time is up
     this.notifyOn = true;         // on-screen notification
+    this.ambientVol = 0.5;        // ambient playlist volume (0..1)
     this.language = "en";         // 'vi' | 'en'
     this.background = "dark";     // 'dark' | 'light' | 'custom'
     this.bgCustom = "#1b2a4a";    // background color when background==='custom'
@@ -40,6 +41,7 @@ class Settings {
       workUnit: this.workUnit, shortUnit: this.shortUnit, longUnit: this.longUnit,
       longBreakInterval: this.longBreakInterval,
       autoStart: this.autoStart, soundOn: this.soundOn, notifyOn: this.notifyOn,
+      ambientVol: this.ambientVol,
       language: this.language, background: this.background, bgCustom: this.bgCustom,
     }));
   }

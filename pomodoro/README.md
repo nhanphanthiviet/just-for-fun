@@ -25,6 +25,7 @@ Then open **http://localhost:8000**.
 - Auto-advance between sessions, with a long break every few rounds
 - To-do list saved in your browser (localStorage)
 - Sound + desktop notification when time is up
+- 🎵 **Relaxing playlist** (rain / ocean / wind chimes / soft pad) — click a track to play a gentle looping soundscape, click again to stop; smooth fade in/out and a volume slider
 - 💬 **Chatbot**: type e.g. `work 50 min break 10 min 4 sessions` → it builds the plan
 - Tip: press **Space** to start/pause
 
@@ -42,6 +43,7 @@ pomodoro/
    └─ core/                # pure logic (no DOM)
       ├─ settings.js       # save/load settings
       ├─ timer.js          # countdown clock
+      ├─ ambient.js        # background soundscapes (white noise / rain / café)
       ├─ scheduler.js      # work/break loop + plan queue
       ├─ parser.js         # chatbot: text → plan (offline)
       └─ tasks.js          # to-do list

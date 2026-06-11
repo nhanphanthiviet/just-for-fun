@@ -104,7 +104,7 @@ body {
 .clock-card { padding: clamp(22px, 5vw, 34px) clamp(18px, 4vw, 26px); text-align: center; }
 
 /* ===== Progress ring ===== */
-.ring-wrap { position: relative; width: clamp(216px, 64vw, 300px); aspect-ratio: 1; margin: 0 auto 22px; }
+.ring-wrap { position: relative; width: clamp(240px, 70vw, 360px); aspect-ratio: 1; margin: 0 auto 22px; }
 .ring { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring-bg { fill: none; stroke: var(--ring-bg); stroke-width: 11; }
 .ring .g1 { stop-color: var(--accent); }
@@ -200,6 +200,9 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 }
 .task-item:hover { background: var(--card-hover); }
 .task-item.active { border-color: var(--accent); background: var(--card-hover); box-shadow: 0 0 0 2px var(--glow); }
+.task-item.dragging { opacity: 0.55; cursor: grabbing; }
+.t-grip { color: var(--muted); cursor: grab; font-size: 0.95rem; line-height: 1; user-select: none; touch-action: none; }
+.t-grip:hover { color: var(--text); }
 .task-item.just-added { animation: slide-up 0.28s ease-out; }
 .task-item.flash { animation: flash-warn 1s ease; }
 .task-item.done .t-text { text-decoration: line-through; opacity: 0.5; }
@@ -275,9 +278,29 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .modal-card select { cursor: pointer; }
 .modal-card input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
 .modal-card input[type="color"] { width: 48px; height: 34px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); cursor: pointer; }
+.modal-card input[type="range"] { width: 130px; accent-color: var(--accent); cursor: pointer; }
 .set-divider { border: none; border-top: 1px solid var(--border); margin: 6px 0 16px; }
 
 .hidden { display: none !important; }
+
+/* ===== Ambient player (playlist) ===== */
+.player { margin-top: 18px; padding: 18px 20px; }
+.player-vol { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.player-vol input[type="range"] { width: 120px; accent-color: var(--accent); cursor: pointer; }
+.tracks { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.track {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 10px; border-radius: 14px; cursor: pointer;
+  background: var(--card-2); border: 1px solid var(--border); color: var(--text);
+  font-family: inherit; font-size: 0.9rem;
+  transition: border-color 0.2s, background 0.2s, transform 0.12s;
+}
+.track:hover { transform: translateY(-2px); border-color: var(--accent); }
+.track .track-ico { font-size: 1.5rem; line-height: 1; }
+.track.active {
+  border-color: var(--accent); background: var(--glow);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
 
 /* ======================================================================
    RESPONSIVE — large screens: 2 columns

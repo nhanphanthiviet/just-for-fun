@@ -66,6 +66,13 @@ class TaskStore {
     this.save();
   }
 
+  // reorder the list to match a sequence of ids (from drag & drop)
+  reorder(ids) {
+    const byId = new Map(this.items.map((i) => [String(i.id), i]));
+    const next = ids.map((id) => byId.get(id)).filter(Boolean);
+    if (next.length === this.items.length) { this.items = next; this.save(); }
+  }
+
   clear() {
     this.items = [];
     this.save();

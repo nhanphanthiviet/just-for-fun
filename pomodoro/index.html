@@ -104,6 +104,24 @@
         </section>
       </div>
     </div>
+
+    <!-- ===== AMBIENT PLAYER (playlist) ===== -->
+    <section class="player panel">
+      <div class="panel-head">
+        <h2 data-i18n="player_title">🎵 Ambient sounds</h2>
+        <div class="player-vol">
+          <span class="vol-ico" aria-hidden="true">🔊</span>
+          <input id="amb-vol" type="range" min="0" max="100" value="50" data-i18n-title="set_ambient_vol" title="Volume" aria-label="Ambient volume">
+        </div>
+      </div>
+      <div id="amb-tracks" class="tracks">
+        <button class="track" data-amb="off"><span class="track-ico" aria-hidden="true">🔇</span><span data-i18n="amb_off">Off</span></button>
+        <button class="track" data-amb="rain"><span class="track-ico" aria-hidden="true">🌧️</span><span data-i18n="amb_rain">Rain</span></button>
+        <button class="track" data-amb="ocean"><span class="track-ico" aria-hidden="true">🌊</span><span data-i18n="amb_ocean">Ocean</span></button>
+        <button class="track" data-amb="chimes"><span class="track-ico" aria-hidden="true">🎐</span><span data-i18n="amb_chimes">Wind chimes</span></button>
+        <button class="track" data-amb="pad"><span class="track-ico" aria-hidden="true">🎶</span><span data-i18n="amb_pad">Soft pad</span></button>
+      </div>
+    </section>
   </div>
 
   <!-- ===== CHATBOT — FLOATING BUTTON + POPUP ===== -->
@@ -192,6 +210,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/core/settings.js"></script>
   <script src="js/core/timer.js"></script>
+  <script src="js/core/ambient.js"></script>
   <script src="js/core/scheduler.js"></script>
   <script src="js/core/parser.js"></script>
   <script src="js/core/tasks.js"></script>
